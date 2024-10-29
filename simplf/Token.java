@@ -1,4 +1,4 @@
-package simplf; 
+package simplf;
 
 public class Token {
     final TokenType type;

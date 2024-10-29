@@ -1,20 +1,23 @@
 package simplf;
- 
+
 import java.util.List;
 
 class SimplfFunction implements SimplfCallable {
+    Stmt.Function declaration;
+    Environment closure;
 
     SimplfFunction(Stmt.Function declaration, Environment closure) {
-        throw new UnsupportedOperationException("TODO: implement functions");
+        this.declaration = declaration;
+        this.closure = closure;
     }
 
     public void setClosure(Environment environment) {
-        throw new UnsupportedOperationException("TODO: implement functions");
+        this.closure = environment;
     }
 
     @Override
     public Object call(Interpreter interpreter, List<Object> args) {
-        throw new UnsupportedOperationException("TODO: implement functions");
+        return true;
     }
 
     @Override

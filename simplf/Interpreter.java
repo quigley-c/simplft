@@ -1,4 +1,4 @@
-package simplf; 
+package simplf;
 
 import java.util.List;
 
@@ -24,7 +24,8 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
 
     @Override
     public Object visitExprStmt(Stmt.Expression stmt) {
-        throw new UnsupportedOperationException("TODO: implement statements");
+        //System.out.println("expr stmt");
+        return evaluate(stmt.expr);
     }
 
     @Override
@@ -36,32 +37,64 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
 
     @Override
     public Void visitVarStmt(Stmt.Var stmt) {
-        throw new UnsupportedOperationException("TODO: implement statements");
+        //System.out.println("var stmt");
+        //System.out.println("init: " + stmt.initializer);
+        Object val = evaluate(stmt.initializer);
+        environment = environment.define(
+                stmt.name,
+                stmt.name.lexeme,
+                val);
+        return null;
     }
 
     @Override
     public Object visitBlockStmt(Stmt.Block stmt) {
-        throw new UnsupportedOperationException("TODO: implement statements");
+        //System.out.println("block stmt");
+        for(Stmt s : stmt.statements) {
+            execute(s);
+        }
+        return new Object();
     }
 
     @Override
     public Object visitIfStmt(Stmt.If stmt) {
-        throw new UnsupportedOperationException("TODO: implement statements");
+        Object b = evaluate(stmt.cond);
+        //System.out.println(b);
+        if (b.equals(true)) {
+            execute(stmt.thenBranch);
+        } else {
+            execute(stmt.elseBranch);
+        }
+        return b;
     }
 
     @Override
     public Object visitWhileStmt(Stmt.While stmt) {
-        throw new UnsupportedOperationException("TODO: implement statements");
+        while(evaluate(stmt.cond).equals(true)) {
+            execute(stmt.body);
+        }
+        return null;
     }
 
     @Override
     public Object visitForStmt(For stmt) {
-        throw new UnsupportedOperationException("For loops are not interpreted.");
+        Object val = evaluate(stmt.init);
+        while(evaluate(stmt.cond).equals(true)) {
+            execute(stmt.body);
+            evaluate(stmt.incr);
+        }
+        return null;
     }
 
     @Override
     public Object visitFunctionStmt(Stmt.Function stmt) {
-        throw new UnsupportedOperationException("TODO: implement statements");
+        SimplfFunction f = new SimplfFunction(stmt, environment);
+        environment.define(stmt.name, stmt.name.lexeme, f);
+        System.out.println("f.lex: " + stmt.name.lexeme);
+        for (Token t : stmt.params) {
+            environment.define(t, t.lexeme, null);
+        }
+        return f;
     }
 
     @Override
@@ -154,11 +187,21 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
 
     @Override
     public Object visitVarExpr(Expr.Variable expr) {
-        throw new UnsupportedOperationException("TODO: implement variable references");
+        AssocList e = (AssocList) environment.get(expr.name);
+        return e.value;
     }
     @Override
     public Object visitCallExpr(Expr.Call expr) {
-        throw new UnsupportedOperationException("TODO: implement function calls");
+        System.out.println("tok: " + expr.callee);
+        //Object x = evaluate(expr.callee);
+        //SimplfFunction f = (SimplfFunction) environment.get(v);
+        for (Expr e : expr.args) {
+            Object v = evaluate(e);
+            System.out.println("v: " + v);
+        }
+        //f.setClosure(expr.callee);
+        //f.call(this, list);
+        return false;
     }
 
     private Object evaluate(Expr expr) {
@@ -167,7 +210,10 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
 
     @Override
     public Object visitAssignExpr(Expr.Assign expr) {
-        throw new UnsupportedOperationException("TODO: implement assignments");
+        //System.out.println("Assign expr");
+        Object val = evaluate(expr.value);
+        environment.assign(expr.name, val);
+        return val;
     }
 
     @Override
@@ -225,4 +271,4 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
     }
 
 
-} 
+}

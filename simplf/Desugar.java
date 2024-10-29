@@ -24,7 +24,7 @@ import simplf.Stmt.While;
 public class Desugar implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt> {
 
     public Desugar() {
-        
+
     }
 
     public List<Stmt> desugar(List<Stmt> stmts) {
@@ -81,7 +81,11 @@ public class Desugar implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt> {
 
     @Override
     public Stmt visitForStmt(For stmt) {
-        throw new UnsupportedOperationException("TODO: desugar for loops");
+        return new For(
+                stmt.init.accept(this),
+                stmt.cond.accept(this),
+                stmt.incr.accept(this),
+                stmt.body.accept(this));
     }
 
     @Override
@@ -131,7 +135,7 @@ public class Desugar implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt> {
 
     @Override
     public Expr visitConditionalExpr(Conditional expr) {
-        return new Conditional(expr.cond.accept(this), 
+        return new Conditional(expr.cond.accept(this),
             expr.thenBranch.accept(this),
             expr.elseBranch.accept(this));
     }
