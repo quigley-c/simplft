@@ -33,8 +33,8 @@ class Environment {
     // This should be constructed by building a new class of type AssocList whose "next"
     // reference is the previous AssocList.
     Environment define(Token varToken, String name, Object value) {
+        //System.out.println("defining: " + name + " = " + value);
         AssocList newList = new AssocList(name, value, this.data);
-        //System.out.println("new var " + name + " created with val: " + newList.value);
         Environment e = new Environment(newList, this);
         return e;
     }
@@ -42,19 +42,18 @@ class Environment {
     void assign(Token name, Object value) {
         AssocList e = (AssocList) get(name);
         e.value = value;
-        //System.out.println("Assigned val " + value + " to " + name.literal);
     }
 
     Object get(Token name) {
         AssocList cur = this.data;
-        while(cur.next != null) {
-            if (cur.name.equals(name.literal)) {return cur;}
+        while(cur != null && cur.next != null) {
+            if (cur.name.equals(name.literal)) { return cur; }
             cur = cur.next;
         }
-        if (!cur.name.equals(name.literal)) {
+        if (cur == null || !cur.name.equals(name.literal)) {
             Simplf.runtimeError(
                     new RuntimeError(
-                        name, "Undefined Symbol: " + name.literal));
+                        name, "Undefined Symbol: " + name.lexeme));
             throw new RuntimeException("Runtime Error");
         }
         return cur;

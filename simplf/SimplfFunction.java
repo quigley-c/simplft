@@ -17,7 +17,22 @@ class SimplfFunction implements SimplfCallable {
 
     @Override
     public Object call(Interpreter interpreter, List<Object> args) {
-        return true;
+        for (int i = 0; i < args.size(); i++) {
+            Token t = declaration.params.get(i);
+            //System.out.println("fn param: " + t.lexeme);
+
+            Expr.Literal e = new Expr.Literal(args.get(i));
+            Stmt.Var stmt = new Stmt.Var(t, e);
+            interpreter.visitVarStmt(stmt);
+        }
+        Object ret = new Object();
+        for (Stmt s : declaration.body) {
+            //System.out.print("execute stmt: ");
+            ret = interpreter.execute(s);
+            //System.out.println(ret);
+        }
+
+        return ret;
     }
 
     @Override

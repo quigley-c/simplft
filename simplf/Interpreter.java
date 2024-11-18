@@ -1,6 +1,7 @@
 package simplf;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import simplf.Stmt.For;
 
@@ -8,8 +9,9 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
     public Environment globals = new Environment();
     private Environment environment = globals;
 
-    Interpreter() {
-
+    Interpreter() {}
+    Interpreter(Environment closing) {
+        this.environment = closing;
     }
 
     public void interpret(List<Stmt> stmts) {
@@ -37,8 +39,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
 
     @Override
     public Void visitVarStmt(Stmt.Var stmt) {
-        //System.out.println("var stmt");
-        //System.out.println("init: " + stmt.initializer);
+        //System.out.println("init var: " + stmt.name.lexeme);
         Object val = evaluate(stmt.initializer);
         environment = environment.define(
                 stmt.name,
@@ -88,11 +89,11 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
 
     @Override
     public Object visitFunctionStmt(Stmt.Function stmt) {
-        SimplfFunction f = new SimplfFunction(stmt, environment);
-        environment.define(stmt.name, stmt.name.lexeme, f);
-        System.out.println("f.lex: " + stmt.name.lexeme);
+        SimplfFunction f = new SimplfFunction(stmt, new Environment());
+        environment = environment.define(stmt.name, stmt.name.lexeme, f);
+        f.closure = environment;
         for (Token t : stmt.params) {
-            environment.define(t, t.lexeme, null);
+            environment = environment.define(t, t.lexeme, null);
         }
         return f;
     }
@@ -192,16 +193,14 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
     }
     @Override
     public Object visitCallExpr(Expr.Call expr) {
-        System.out.println("tok: " + expr.callee);
-        //Object x = evaluate(expr.callee);
-        //SimplfFunction f = (SimplfFunction) environment.get(v);
-        for (Expr e : expr.args) {
-            Object v = evaluate(e);
-            System.out.println("v: " + v);
+        SimplfFunction f = (SimplfFunction) evaluate(expr.callee);
+        List<Object> args = new ArrayList();
+        for (Expr a : expr.args) {
+            args.add(evaluate(a));
         }
-        //f.setClosure(expr.callee);
-        //f.call(this, list);
-        return false;
+        Interpreter i = new Interpreter(f.closure);
+        Object ret = f.call(i, args);
+        return ret;
     }
 
     private Object evaluate(Expr expr) {
@@ -210,8 +209,8 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
 
     @Override
     public Object visitAssignExpr(Expr.Assign expr) {
-        //System.out.println("Assign expr");
         Object val = evaluate(expr.value);
+        //System.out.println(expr.name.lexeme + ": " + val);
         environment.assign(expr.name, val);
         return val;
     }
@@ -225,7 +224,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
         }
     }
 
-    private Object execute(Stmt stmt) {
+    public Object execute(Stmt stmt) {
         return stmt.accept(this);
     }
 
