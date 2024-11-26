@@ -5,10 +5,12 @@ import java.util.List;
 class SimplfFunction implements SimplfCallable {
     Stmt.Function declaration;
     Environment closure;
+    DataType return_type;
 
-    SimplfFunction(Stmt.Function declaration, Environment closure) {
+    SimplfFunction(Stmt.Function declaration, Environment closure, DataType return_type) {
         this.declaration = declaration;
         this.closure = closure;
+        this.return_type = return_type;
     }
 
     public void setClosure(Environment environment) {

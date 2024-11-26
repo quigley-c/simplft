@@ -1,4 +1,4 @@
-package simplf; 
+package simplf;
 
 import java.util.List;
 
@@ -60,7 +60,7 @@ public abstract class Expr {
     public static class Literal extends Expr {
         final Object val;
 
-        public Literal(Object val) {
+        public Literal(Object val, DataType type) {
             this.val = val;
         }
 
@@ -99,10 +99,11 @@ public abstract class Expr {
     public static class Assign extends Expr {
         final Token name;
         final Expr value;
-
-        public Assign(Token name, Expr value) {
+        final DataType type;
+        public Assign(Token name, Expr value, DataType type) {
             this.name = name;
             this.value = value;
+            this.type = type;
         }
 
         <T> T accept(Visitor<T> visitor) {

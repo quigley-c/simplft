@@ -1,4 +1,4 @@
-package simplf; 
+package simplf;
 
 public enum TokenType {
     // Grouping

@@ -125,7 +125,7 @@ public class Desugar implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt> {
 
     @Override
     public Expr visitAssignExpr(Assign expr) {
-        return new Assign(expr.name, expr.value.accept(this));
+        return new Assign(expr.name, expr.value.accept(this), expr.type);
     }
 
     @Override

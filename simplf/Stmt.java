@@ -1,4 +1,4 @@
-package simplf; 
+package simplf;
 
 import java.util.List;
 
@@ -125,13 +125,17 @@ public abstract class Stmt {
 
     public static class Function extends Stmt {
         Token name;
+        DataType type;
         List<Token> params;
         List<Stmt> body;
+        List<DataType> param_types;
 
-        public Function(Token name, List<Token> params, List<Stmt> body) {
+        public Function(Token name, List<Token> params, List<Stmt> body, DataType type, List<DataType> param_types) {
             this.name = name;
             this.params = params;
             this.body = body;
+            this.type = type;
+            this.param_types = param_types;
         }
 
         <T> T accept(Visitor<T> vis) {
