@@ -16,14 +16,16 @@ declaration returns [Stmt val]: funDecl      {$val = $funDecl.val;}
                              |  statement    {$val = $statement.val;};
 
 funDecl returns [Stmt val]: 
-      FUN id LEFT_PAREN RIGHT_PAREN block           {$val = new Stmt.Function($id.val, new ArrayList<>(), $block.val);}
-    | FUN id LEFT_PAREN params RIGHT_PAREN block    {$val = new Stmt.Function($id.val, $params.val, $block.val);};
+      FUN id LEFT_PAREN RIGHT_PAREN COLON type block           {$val = new Stmt.Function($id.val, new ArrayList<>(), $block.val, $type.r, new ArrayList<>());}
+    | FUN id LEFT_PAREN params RIGHT_PAREN COLON type block    {$val = new Stmt.Function($id.val, $params.names, $block.val, $type.r, $params.types);};
 
-params returns [List<simplf.Token> val = new ArrayList<>();] :
-    id1=id {$val.add($id1.val);} (COMMA idi=id {$val.add($idi.val);})*;
+params returns [List<simplf.Token> names = new ArrayList<>(), List<simplf.DataType> types = new ArrayList<>()] :
+    param1=param {$names.add($param1.p); $types.add($param1.ty);} (COMMA parami=param {$names.add($parami.p); $types.add($parami.ty);})*;
 
-varDecl returns [Stmt val] :    VAR id SEMICOLON                        {$val = new Stmt.Var($id.val, null);}
-                           |    VAR id EQUAL expression SEMICOLON       {$val = new Stmt.Var($id.val, $expression.val);};
+param returns [simplf.Token p, simplf.DataType ty]: id COLON type { $p = $id.val; $ty = $type.r; };
+
+varDecl returns [Stmt val] :    VAR id COLON type SEMICOLON                        {$val = new Stmt.Var($id.val, null, $type.r);}
+                           |    VAR id COLON type EQUAL expression SEMICOLON       {$val = new Stmt.Var($id.val, $expression.val, $type.r);};
 
 statement returns [Stmt val] :  exprStatement                           {$val = $exprStatement.val;}
           |                     ifStatement                             {$val = $ifStatement.val;}
@@ -84,6 +86,10 @@ literal returns [Object val]:   STRINGLIT  {$val = $STRINGLIT.text.substring(1,$
                             |   NIL     {$val = null;};
 
 
+type returns [simplf.DataType r]: CHAR      {$r = simplf.DataType.CHAR;}
+                         | FLOAT            {$r = simplf.DataType.FLOAT;}
+                         | STRING           {$r = simplf.DataType.STRING;};
+
 id returns [simplf.Token val]: ident=IDENTIFIER {$val = new simplf.Token(simplf.TokenType.IDENTIFIER, $ident.text, $ident.text, $ident.line, $ident.pos);};
 
 or returns [simplf.Token val]: OR {$val = new simplf.Token(simplf.TokenType.OR, $OR.text, null, $OR.line, $OR.pos);};
@@ -109,7 +115,6 @@ bang returns [simplf.Token val]: BANG {$val = new simplf.Token(simplf.TokenType.
 rparen returns [simplf.Token val]: RIGHT_PAREN {$val = new simplf.Token(simplf.TokenType.RIGHT_PAREN, $RIGHT_PAREN.text, null, $RIGHT_PAREN.line, $RIGHT_PAREN.pos);};
 
 
-
 LEFT_PAREN  : '(';
 RIGHT_PAREN : ')';
 LEFT_BRACE  : '{';
@@ -119,6 +124,7 @@ DOT         : '.';
 MINUS       : '-';
 PLUS        : '+';
 SEMICOLON   : ';';
+COLON       : ':';
 STAR        : '*';
 SLASH       : '/';
 
@@ -146,6 +152,10 @@ THIS        : 'this';
 TRUE        : 'true';
 VAR         : 'var';
 WHILE       : 'while';
+
+CHAR         : 'char';
+FLOAT       : 'float';
+STRING      : 'string';
 
 IDENTIFIER  : [a-zA-Z_] [a-zA-Z0-9_]*;
 STRINGLIT   : '"' (~["\n\r])* '"';

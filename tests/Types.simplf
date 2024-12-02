@@ -1,0 +1,19 @@
+// Functions 
+
+// Factorial Function
+
+fun fact(n : float) : float
+{
+    var ret : float = 0;
+    if(n == 1)
+    {
+        ret = 1;
+    }
+    else{
+        ret = n * fact(n-1);
+    }
+    ret;
+}
+
+print fact(3);
+
