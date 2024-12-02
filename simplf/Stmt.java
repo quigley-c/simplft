@@ -53,10 +53,12 @@ public abstract class Stmt {
     public static class Var extends Stmt {
         final Token name;
         final Expr initializer;
+        final DataType type;
 
-        public Var(Token name, Expr initializer) {
+        public Var(Token name, Expr initializer, DataType type) {
             this.name = name;
             this.initializer = initializer;
+            this.type = type;
         }
 
         @Override

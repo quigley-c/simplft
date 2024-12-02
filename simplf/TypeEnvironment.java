@@ -42,7 +42,7 @@ class TypeEnvironment {
     void assign(Token name, Object value) {
         // don't assign, check the type
         AssocList e = (AssocList) get(name);
-        assert e.value == value.type;
+        assert e.value == value;
     }
 
     Object get(Token name) {

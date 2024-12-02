@@ -47,7 +47,7 @@ public class Desugar implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt> {
 
     @Override
     public Stmt visitVarStmt(Var stmt) {
-        return new Var(stmt.name, stmt.initializer.accept(this));
+        return new Var(stmt.name, stmt.initializer.accept(this), stmt.type);
     }
 
     @Override
@@ -95,7 +95,7 @@ public class Desugar implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt> {
             new_body.add(old_statement.accept(this));
         }
 
-        return new Function(stmt.name, stmt.params, new_body);
+        return new Function(stmt.name, stmt.params, new_body, stmt.type, stmt.param_types);
     }
 
     @Override
@@ -125,7 +125,7 @@ public class Desugar implements Expr.Visitor<Expr>, Stmt.Visitor<Stmt> {
 
     @Override
     public Expr visitAssignExpr(Assign expr) {
-        return new Assign(expr.name, expr.value.accept(this), expr.type);
+        return new Assign(expr.name, expr.value.accept(this));
     }
 
     @Override

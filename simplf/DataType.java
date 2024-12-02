@@ -1,7 +1,7 @@
 package simplf;
 
 public enum DataType {
-    FLOAT, CHAR, STRING;
+    BOOL, FLOAT, CHAR, STRING, NULL;
 
     public String toString() {
         return "";

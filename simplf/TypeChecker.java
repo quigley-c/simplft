@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 import simplf.Stmt.For;
 
-class TypeChecker implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
+class TypeChecker implements Expr.Visitor<DataType>, Stmt.Visitor<DataType> {
     public TypeEnvironment globals = new TypeEnvironment();
     private TypeEnvironment environment = globals;
 
@@ -25,41 +25,41 @@ class TypeChecker implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
     }
 
     @Override
-    public Object visitExprStmt(Stmt.Expression stmt) {
+    public DataType visitExprStmt(Stmt.Expression stmt) {
         //System.out.println("expr stmt");
-        return evaluate(stmt.expr);
+        return (DataType) evaluate(stmt.expr);
     }
 
     @Override
-    public Object visitPrintStmt(Stmt.Print stmt) {
-        Object val = evaluate(stmt.expr);
+    public DataType visitPrintStmt(Stmt.Print stmt) {
+        DataType val = (DataType) evaluate(stmt.expr);
         System.out.println(stringify(val));
         return null;
     }
 
     @Override
-    public Void visitVarStmt(Stmt.Var stmt) {
+    public DataType visitVarStmt(Stmt.Var stmt) {
         //System.out.println("init var: " + stmt.name.lexeme);
-        DataType t = evaluate(stmt.initializer);
+        DataType t = (DataType) evaluate(stmt.initializer);
         environment = environment.define(
                 stmt.name,
                 stmt.name.lexeme,
                 t);
-        return null;
+        return DataType.NULL;
     }
 
     @Override
-    public Object visitBlockStmt(Stmt.Block stmt) {
+    public DataType visitBlockStmt(Stmt.Block stmt) {
         //System.out.println("block stmt");
         for(Stmt s : stmt.statements) {
             execute(s);
         }
-        return new Object();
+        return DataType.NULL;
     }
 
     @Override
-    public Object visitIfStmt(Stmt.If stmt) {
-        Object b = evaluate(stmt.cond);
+    public DataType visitIfStmt(Stmt.If stmt) {
+        DataType b = (DataType) evaluate(stmt.cond);
         //System.out.println(b);
         if (b.equals(true)) {
             execute(stmt.thenBranch);
@@ -70,7 +70,7 @@ class TypeChecker implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
     }
 
     @Override
-    public Object visitWhileStmt(Stmt.While stmt) {
+    public DataType visitWhileStmt(Stmt.While stmt) {
         while(evaluate(stmt.cond).equals(true)) {
             execute(stmt.body);
         }
@@ -78,8 +78,8 @@ class TypeChecker implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
     }
 
     @Override
-    public Object visitForStmt(For stmt) {
-        Object val = evaluate(stmt.init);
+    public DataType visitForStmt(For stmt) {
+        DataType val = (DataType) evaluate(stmt.init);
         while(evaluate(stmt.cond).equals(true)) {
             execute(stmt.body);
             evaluate(stmt.incr);
@@ -88,18 +88,19 @@ class TypeChecker implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
     }
 
     @Override
-    public Object visitFunctionStmt(Stmt.Function stmt) {
-        DataType f = evaluate(stmt);
+    public DataType visitFunctionStmt(Stmt.Function stmt) {
+        SimplfFunction f = new SimplfFunction(stmt, stmt.type);
         environment = environment.define(stmt.name, stmt.name.lexeme, f.return_type);
-        for (Token t : stmt.params) {
-            environment = environment.define(t, t.lexeme, t.data_type);
+        for (int i = 0; i < stmt.params.size(); i++) {
+            Token t = stmt.params.get(i);
+            environment = environment.define(t, t.lexeme, stmt.param_types.get(i));
         }
-        return f;
+        return f.return_type;
     }
 
     @Override
-    public Object visitLogicalExpr(Expr.Logical expr) {
-        Object left = evaluate(expr.left);
+    public DataType visitLogicalExpr(Expr.Logical expr) {
+        DataType left = (DataType) evaluate(expr.left);
         if (expr.op.type == TokenType.OR) {
             if (isTruthy(left))
                 return left;
@@ -107,13 +108,13 @@ class TypeChecker implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
             if (!isTruthy(left))
                 return left;
         }
-        return evaluate(expr.right);
+        return (DataType) evaluate(expr.right);
     }
 
     @Override
     public DataType visitBinary(Expr.Binary expr) {
-        DataType left = evaluate(expr.left);
-        DataType right = evaluate(expr.right);
+        DataType left = (DataType) evaluate(expr.left);
+        DataType right = (DataType) evaluate(expr.right);
 
         switch (expr.op.type) {
             case PLUS:
@@ -122,23 +123,17 @@ class TypeChecker implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
                 }
                 return checkNumbers(expr.op, left, right);
             case MINUS:
-                return checkNumbers(expr.op, left, right);
             case STAR:
-                return checkNumbers(expr.op, left, right);
             case SLASH:
-                return checkNumbers(expr.op, left, right);
             case GREATER:
-                return checkNumbers(expr.op, left, right);
             case GREATER_EQUAL:
-                return checkNumbers(expr.op, left, right);
             case LESS:
-                return checkNumbers(expr.op, left, right);
             case LESS_EQUAL:
                 return checkNumbers(expr.op, left, right);
             case EQUAL_EQUAL:
-                return isEqual(left, right);
             case BANG_EQUAL:
-                return !isEqual(left, right);
+                assert (left == right) && (left == DataType.BOOL) && (right == DataType.BOOL);
+                return DataType.BOOL;
             case COMMA:
                 return right;
             default:
@@ -148,14 +143,15 @@ class TypeChecker implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
     }
 
     @Override
-    public Object visitUnary(Expr.Unary expr) {
-        Object right = evaluate(expr.right);
+    public DataType visitUnary(Expr.Unary expr) {
+        DataType right = (DataType) evaluate(expr.right);
         switch (expr.op.type) {
             case MINUS:
                 checkNumber(expr.op, right);
-                return -(double) right;
+                return right;
             case BANG:
-                return !isTruthy(right);
+                assert right == DataType.BOOL;
+                return right;
             default:
                 break;
         }
@@ -163,88 +159,85 @@ class TypeChecker implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
     }
 
     @Override
-    public Object visitLiteral(Expr.Literal expr) {
-        return expr.type;
+    public DataType visitLiteral(Expr.Literal expr) {
+        return (DataType) evaluate(expr);
     }
 
     @Override
-    public Object visitGrouping(Expr.Grouping expr) {
-        return evaluate(expr.expression);
+    public DataType visitGrouping(Expr.Grouping expr) {
+        return (DataType) evaluate(expr.expression);
     }
 
     @Override
-    public Object visitVarExpr(Expr.Variable expr) {
+    public DataType visitVarExpr(Expr.Variable expr) {
         // the value of the assoc list is, in this case, a type
         AssocList e = (AssocList) environment.get(expr.name);
-        return e.value;
+        return (DataType) e.value;
     }
 
     @Override
-    public Object visitCallExpr(Expr.Call expr) {
+    public DataType visitCallExpr(Expr.Call expr) {
         SimplfFunction f = (SimplfFunction) evaluate(expr.callee);
-        for (int i = 0; expr.args.length(); i++) {
-            assert expr.args[i].name.data_type == f.declaration[i].name.data_type;
+        for (int i = 0; i < expr.args.size(); i++) {
+            assert environment.get(f.declaration.params.get(i)) == evaluate(expr.args.get(i));
         }
-        return ret;
+        return f.return_type;
     }
 
-    private DataType evaluate(Expr expr) {
+    private Object evaluate(Expr expr) {
         return expr.accept(this);
     }
 
     @Override
-    public Object visitAssignExpr(Expr.Assign expr) {
-        Object type = evaluate(expr.value);
+    public DataType visitAssignExpr(Expr.Assign expr) {
+        DataType type = (DataType) evaluate(expr.value);
         //System.out.println(expr.name.lexeme + ": " + val);
-        environment.assign(expr.name, val);
+        environment.assign(expr.name, type);
         return type;
     }
 
     @Override
-    public Object visitConditionalExpr(Expr.Conditional expr) {
-        if (isTruthy(evaluate(expr.cond))) {
-            return evaluate(expr.thenBranch);
+    public DataType visitConditionalExpr(Expr.Conditional expr) {
+        if (isTruthy((DataType) evaluate(expr.cond))) {
+            return (DataType) evaluate(expr.thenBranch);
         } else {
-            return evaluate(expr.elseBranch);
+            return (DataType) evaluate(expr.elseBranch);
         }
     }
 
-    public Object execute(Stmt stmt) {
+    public DataType execute(Stmt stmt) {
         return stmt.accept(this);
     }
 
-    private boolean isTruthy(Object object) {
+    private boolean isTruthy(DataType object) {
         if (object == null) {
             return false;
-        }
-        if (object instanceof Boolean) {
-            return (boolean) object;
         }
         return true;
     }
 
-    private boolean isEqual(Object a, Object b) {
+    private boolean isEqual(DataType a, DataType b) {
         if (a == null)
             return b == null;
         return a.equals(b);
     }
 
-    private void checkNumber(Token op, Object object) {
-        if (object instanceof Double)
+    private void checkNumber(Token op, DataType object) {
+        if (object == DataType.FLOAT)
             return;
         throw new RuntimeError(op, "Operand must be a number");
     }
 
     private DataType checkNumbers(Token op, DataType a, DataType b) {
-        if (a == b)
+        if (a == b && a != DataType.STRING && b != DataType.STRING)
             return a;
         throw new RuntimeError(op, "Type mismatch. Expected " + a.toString() + " found " + b.toString());
     }
 
-    private String stringify(Object object) {
+    private String stringify(DataType object) {
         if (object == null)
             return "nil";
-        if (object instanceof Double) {
+        if (object == DataType.FLOAT) {
             String num = object.toString();
             if (num.endsWith(".0")) {
                 num = num.substring(0, num.length() - 2);

@@ -89,7 +89,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
 
     @Override
     public Object visitFunctionStmt(Stmt.Function stmt) {
-        SimplfFunction f = new SimplfFunction(stmt, new Environment());
+        SimplfFunction f = new SimplfFunction(stmt, new Environment(), stmt.type);
         environment = environment.define(stmt.name, stmt.name.lexeme, f);
         f.closure = environment;
         for (Token t : stmt.params) {

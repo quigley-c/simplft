@@ -13,6 +13,12 @@ class SimplfFunction implements SimplfCallable {
         this.return_type = return_type;
     }
 
+    SimplfFunction(Stmt.Function declaration, DataType return_type) {
+        this.declaration = declaration;
+        this.closure = new Environment();
+        this.return_type = return_type;
+    }
+
     public void setClosure(Environment environment) {
         this.closure = environment;
     }
@@ -24,7 +30,7 @@ class SimplfFunction implements SimplfCallable {
             //System.out.println("fn param: " + t.lexeme);
 
             Expr.Literal e = new Expr.Literal(args.get(i));
-            Stmt.Var stmt = new Stmt.Var(t, e);
+            Stmt.Var stmt = new Stmt.Var(t, e, declaration.param_types.get(i));
             interpreter.visitVarStmt(stmt);
         }
         Object ret = new Object();
