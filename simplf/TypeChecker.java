@@ -204,7 +204,6 @@ class TypeChecker implements Expr.Visitor<Object>, Stmt.Visitor<DataType> {
     public DataType visitAssignExpr(Expr.Assign expr) {
         DataType type = (DataType) evaluate(expr.value);
         DataType varType = (DataType) ((AssocList) environment.get(expr.name)).value;
-        System.out.println("type: " + type + " var type: " + varType);
         if (varType != null && type != varType) {
             throw new TypeError(expr.name, "Invalid assignment");
         }
