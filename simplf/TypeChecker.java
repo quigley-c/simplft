@@ -21,6 +21,8 @@ class TypeChecker implements Expr.Visitor<Object>, Stmt.Visitor<DataType> {
             }
         } catch (RuntimeError error) {
             Simplf.runtimeError(error);
+        } catch (TypeError error) {
+            Simplf.typeError(error);
         }
     }
 
@@ -39,6 +41,9 @@ class TypeChecker implements Expr.Visitor<Object>, Stmt.Visitor<DataType> {
     @Override
     public DataType visitVarStmt(Stmt.Var stmt) {
         DataType t = (DataType) evaluate(stmt.initializer);
+        if (t != stmt.type) {
+            throw new TypeError(stmt.name, "Invalid variable declaration");
+        }
         environment = environment.define(
                 stmt.name,
                 stmt.name.lexeme,
@@ -184,7 +189,7 @@ class TypeChecker implements Expr.Visitor<Object>, Stmt.Visitor<DataType> {
             DataType formal = f.declaration.param_types.get(i);
             DataType arg = (DataType) evaluate(expr.args.get(i));
             if (formal != arg) {
-                throw new RuntimeError(expr.paren,
+                throw new TypeError(expr.paren,
                     "Invalid function call. Found " + arg + " expected " + formal);
             }
         }
@@ -198,6 +203,11 @@ class TypeChecker implements Expr.Visitor<Object>, Stmt.Visitor<DataType> {
     @Override
     public DataType visitAssignExpr(Expr.Assign expr) {
         DataType type = (DataType) evaluate(expr.value);
+        DataType varType = (DataType) ((AssocList) environment.get(expr.name)).value;
+        System.out.println("type: " + type + " var type: " + varType);
+        if (varType != null && type != varType) {
+            throw new TypeError(expr.name, "Invalid assignment");
+        }
         environment.assign(expr.name, type);
         return type;
     }

@@ -98,4 +98,9 @@ public class Simplf {
         System.err.println(error.getMessage() + ": [line " + error.token.line + " col " + error.token.col + "]");
         hadRuntimeError = true;
     }
+    public static void typeError(TypeError error) {
+        System.err.println(error.getMessage() + ": [line " + error.token.line + " col " + error.token.col + "]");
+        hadRuntimeError = true;
+        System.exit(0);
+    }
 }
