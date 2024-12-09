@@ -7,6 +7,18 @@ print 0;
 print 3.14159;
 print -1;
 
+print "Variables";
+var flt : float = 0;
+var str : string = "hello";
+//var fake_flt : float = "0"; //errs
+//var fake_str : string = 0; //errs
+
+flt = 1;
+//str = 0; // errs
+
+print flt;
+print str;
+
 print "Testing Fun Fact(3)";
 
 // Factorial Function
