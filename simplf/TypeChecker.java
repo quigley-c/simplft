@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 import simplf.Stmt.For;
 
-class TypeChecker implements Expr.Visitor<DataType>, Stmt.Visitor<DataType> {
+class TypeChecker implements Expr.Visitor<Object>, Stmt.Visitor<DataType> {
     public TypeEnvironment globals = new TypeEnvironment();
     private TypeEnvironment environment = globals;
 
@@ -14,7 +14,7 @@ class TypeChecker implements Expr.Visitor<DataType>, Stmt.Visitor<DataType> {
         this.environment = closing;
     }
 
-    public void interpret(List<Stmt> stmts) {
+    public void typeCheck(List<Stmt> stmts) {
         try {
             for (Stmt stmt : stmts) {
                 execute(stmt);
@@ -26,20 +26,18 @@ class TypeChecker implements Expr.Visitor<DataType>, Stmt.Visitor<DataType> {
 
     @Override
     public DataType visitExprStmt(Stmt.Expression stmt) {
-        //System.out.println("expr stmt");
         return (DataType) evaluate(stmt.expr);
     }
 
     @Override
     public DataType visitPrintStmt(Stmt.Print stmt) {
         DataType val = (DataType) evaluate(stmt.expr);
-        System.out.println(stringify(val));
+        //System.out.println(stringify(val));
         return null;
     }
 
     @Override
     public DataType visitVarStmt(Stmt.Var stmt) {
-        //System.out.println("init var: " + stmt.name.lexeme);
         DataType t = (DataType) evaluate(stmt.initializer);
         environment = environment.define(
                 stmt.name,
@@ -50,7 +48,6 @@ class TypeChecker implements Expr.Visitor<DataType>, Stmt.Visitor<DataType> {
 
     @Override
     public DataType visitBlockStmt(Stmt.Block stmt) {
-        //System.out.println("block stmt");
         for(Stmt s : stmt.statements) {
             execute(s);
         }
@@ -60,7 +57,6 @@ class TypeChecker implements Expr.Visitor<DataType>, Stmt.Visitor<DataType> {
     @Override
     public DataType visitIfStmt(Stmt.If stmt) {
         DataType b = (DataType) evaluate(stmt.cond);
-        //System.out.println(b);
         if (b.equals(true)) {
             execute(stmt.thenBranch);
         } else {
@@ -90,7 +86,7 @@ class TypeChecker implements Expr.Visitor<DataType>, Stmt.Visitor<DataType> {
     @Override
     public DataType visitFunctionStmt(Stmt.Function stmt) {
         SimplfFunction f = new SimplfFunction(stmt, stmt.type);
-        environment = environment.define(stmt.name, stmt.name.lexeme, f.return_type);
+        environment = environment.define(stmt.name, stmt.name.lexeme, f);
         for (int i = 0; i < stmt.params.size(); i++) {
             Token t = stmt.params.get(i);
             environment = environment.define(t, t.lexeme, stmt.param_types.get(i));
@@ -160,7 +156,13 @@ class TypeChecker implements Expr.Visitor<DataType>, Stmt.Visitor<DataType> {
 
     @Override
     public DataType visitLiteral(Expr.Literal expr) {
-        return (DataType) evaluate(expr);
+        if (expr.val.getClass().getName() == "java.lang.Double") {
+            return DataType.FLOAT;
+        }
+        if (expr.val.getClass().getName() == "java.lang.String") {
+            return DataType.STRING;
+        }
+        return DataType.CHAR;
     }
 
     @Override
@@ -169,17 +171,22 @@ class TypeChecker implements Expr.Visitor<DataType>, Stmt.Visitor<DataType> {
     }
 
     @Override
-    public DataType visitVarExpr(Expr.Variable expr) {
+    public Object visitVarExpr(Expr.Variable expr) {
         // the value of the assoc list is, in this case, a type
         AssocList e = (AssocList) environment.get(expr.name);
-        return (DataType) e.value;
+        return e.value;
     }
 
     @Override
     public DataType visitCallExpr(Expr.Call expr) {
         SimplfFunction f = (SimplfFunction) evaluate(expr.callee);
         for (int i = 0; i < expr.args.size(); i++) {
-            assert environment.get(f.declaration.params.get(i)) == evaluate(expr.args.get(i));
+            DataType formal = f.declaration.param_types.get(i);
+            DataType arg = (DataType) evaluate(expr.args.get(i));
+            if (formal != arg) {
+                throw new RuntimeError(expr.paren,
+                    "Invalid function call. Found " + arg + " expected " + formal);
+            }
         }
         return f.return_type;
     }
@@ -191,7 +198,6 @@ class TypeChecker implements Expr.Visitor<DataType>, Stmt.Visitor<DataType> {
     @Override
     public DataType visitAssignExpr(Expr.Assign expr) {
         DataType type = (DataType) evaluate(expr.value);
-        //System.out.println(expr.name.lexeme + ": " + val);
         environment.assign(expr.name, type);
         return type;
     }

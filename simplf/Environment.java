@@ -33,7 +33,6 @@ class Environment {
     // This should be constructed by building a new class of type AssocList whose "next"
     // reference is the previous AssocList.
     Environment define(Token varToken, String name, Object value) {
-        //System.out.println("defining: " + name + " = " + value);
         AssocList newList = new AssocList(name, value, this.data);
         Environment e = new Environment(newList, this);
         return e;

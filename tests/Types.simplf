@@ -1,4 +1,13 @@
-// Functions 
+// Functions
+
+print "Hello World!";
+print "numbers: ";
+print 1;
+print 0;
+print 3.14159;
+print -1;
+
+print "Testing Fun Fact(3)";
 
 // Factorial Function
 
@@ -16,4 +25,4 @@ fun fact(n : float) : float
 }
 
 print fact(3);
-
+//print fact("a");

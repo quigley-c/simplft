@@ -210,7 +210,6 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
     @Override
     public Object visitAssignExpr(Expr.Assign expr) {
         Object val = evaluate(expr.value);
-        //System.out.println(expr.name.lexeme + ": " + val);
         environment.assign(expr.name, val);
         return val;
     }
