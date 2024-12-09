@@ -32,7 +32,7 @@ class TypeEnvironment {
     // [{name: "z", value: 3}, {name: "x", value: 1}, {name: "y", value: 2}]
     // This should be constructed by building a new class of type AssocList whose "next"
     // reference is the previous AssocList.
-    TypeEnvironment define(Token varToken, String name, DataType type) {
+    TypeEnvironment define(Token varToken, String name, Object type) {
         //System.out.println("defining: " + name + " = " + value);
         AssocList newList = new AssocList(name, type, this.data);
         TypeEnvironment e = new TypeEnvironment(newList, this);

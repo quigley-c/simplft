@@ -1,4 +1,4 @@
-package simplf; 
+package simplf;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,6 +19,7 @@ public class Simplf {
     static boolean hadError = false;
     static boolean hadRuntimeError = false;
     private static final Interpreter interpreter = new Interpreter();
+    private static final TypeChecker typechecker = new TypeChecker();
 
     public static void main(String args[]) throws IOException {
         if (args.length > 1) {
@@ -66,12 +67,13 @@ public class Simplf {
         //System.out.println("Original program:");
         //print_program(statements);
 
-        List<Stmt> desugared_statements = 
+        List<Stmt> desugared_statements =
             (new Desugar()).desugar(statements);
 
         //System.out.println("Desugared program:");
         //print_program(desugared_statements);
 
+        typechecker.typeCheck(desugared_statements);
         interpreter.interpret(desugared_statements);
     }
 
